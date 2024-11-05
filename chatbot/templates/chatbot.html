@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<style>
+  /* Estilos gerais */
+  body, html {
+    height: 100%;
+    background-color: #e5ddd5;
+    font-family: Arial, sans-serif;
+  }
+
+  .chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    margin: auto;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .header {
+    background-color: #075E54;
+    color: #fff;
+    padding: 15px;
+    display: flex;
+    flex-direction: column; /* Altera para coluna */
+    align-items: flex-start; /* Alinha à esquerda */
+  }
+
+  .header-title {
+    font-weight: bold;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center; /* Alinha verticalmente */
+  }
+
+  .header-title img {
+    width: 40px; /* Ajuste o tamanho da imagem do perfil */
+    height: 40px;
+    border-radius: 50%; /* Torna a imagem redonda */
+    margin-right: 10px; /* Espaçamento entre a imagem e o texto */
+  }
+
+  .header-status {
+    font-size: 12px; /* Tamanho da fonte para o status */
+    color: #e5ddd5; /* Cor do texto do status */
+    margin-left: 50px;
+  }
+
+  .messages-box {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #e5ddd5;
+    padding: 10px;
+  }
+
+  .messages-list {
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .message {
+    display: inline-block;
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    position: relative;
+  }
+
+  .sent {
+    background-color: #dcf8c6;
+    align-self: flex-end;
+    margin-left: auto;
+    border-top-right-radius: 0;
+  }
+
+  .received {
+    background-color: #fff;
+    align-self: flex-start;
+    margin-right: auto;
+    border-top-left-radius: 0;
+  }
+
+  .message-sender {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .message-time {
+    font-size: 10px;
+    color: #888;
+    margin-top: 5px;
+    text-align: right;
+  }
+
+  .message-form {
+    display: flex;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-top: 1px solid #ddd;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .message-input {
+    flex: 1;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    outline: none;
+    font-size: 14px;
+  }
+
+  .btn-send {
+    background-color: #075E54;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    margin-left: 5px;
+    cursor: pointer;
+  }
+
+  .btn-send:hover {
+    background-color: #128c7e;
+  }
+
+  /* Ajustes no design */
+  .protected-message {
+    background-color: #fff8c4; /* Cor da caixa amarela */
+    text-align: center;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Espaço entre o ícone e a mensagem */
+    font-size: 14px; 
+    font-family: Arial, sans-serif;
+    color: #000; /* Cor do texto para maior contraste */
+  }
+
+  .lock-icon {
+    width: 20px; 
+    height: 20px;
+  }
+
+  .protected-message-text {
+    flex: 1;
+    font-weight: bold;
+    line-height: 1.4;
+  }
+
+  .verified-icon {
+    width: 16px; /* Tamanho do ícone de verificado */
+    height: 16px;
+    margin-left: 5px; /* Espaçamento entre o nome e o ícone */
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+  <div class="header">
+    <div class="header-title">
+      <img src="{% static 'images/python.jpg' %}" alt="Perfil da IA"> <!-- Imagem de perfil -->
+      PyIA
+      <img src="{% static 'images/verificado.png' %}" alt="Verificado" class="verified-icon"> <!-- Ícone de verificado do WhatsApp -->
+    </div>
+    <div class="header-status" id="status">Online</div> <!-- Elemento de status -->
+  </div>
+  <div class="messages-box">
+    <div class="protected-message">
+      <span class="protected-message-text">
+        🔒 Esta conversa é protegida por inteligência artificial. Prepare-se para ser surpreendido, ou talvez não... Mas é seguro, prometo. 
+      </span>
+    </div>
+    <ul class="messages-list">
+      {% for chat in chats %}
+        <li class="message sent">
+          <div class="message-sender">Você</div>
+          <div class="message-text">{{ chat.message }}</div>
+          <div class="message-time">{{ chat.created_at|date:"H:i" }}</div>
+        </li>
+        <li class="message received">
+          <div class="message-sender">AI Chatbot</div>
+          <div class="message-text">{{ chat.response|safe }}</div>
+          <div class="message-time">{{ chat.created_at|date:"H:i" }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <form class="message-form" method="POST">
+    {% csrf_token %}
+    <input type="text" name="message" class="form-control message-input" placeholder="Digite sua mensagem">
+    <button type="submit" class="btn-send">Enviar</button>
+  </form>
+</div>
+
+<script>
+  const messagesBox = document.querySelector('.messages-box');
+  const messagesList = document.querySelector('.messages-list');
+  const messageForm = document.querySelector('.message-form');
+  const messageInput = document.querySelector('.message-input');
+  const statusElement = document.getElementById('status');
+  let typingInterval;
+
+  messageForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    const messageItem = document.createElement('li');
+    messageItem.className = 'message sent';
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    messageItem.innerHTML = `<div class="message-sender">Você</div><div class="message-text">${message}</div><div class="message-time">${now}</div>`;
+    messagesList.appendChild(messageItem);
+    messageInput.value = '';
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+
+    // Exibir "Digitando..." e iniciar o intervalo de animação
+    statusElement.innerHTML = 'Digitando';
+    let dots = 1;
+    typingInterval = setInterval(() => {
+      if (dots < 3) {
+        dots++;
+        statusElement.innerHTML = 'Digitando' + '.'.repeat(dots);
+      } else {
+        dots = 1;
+      }
+    }, 500);
+
+    try {
+      const response = await fetch('', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'message': message
+        })
+      });
+      const data = await response.json();
+      const replyItem = document.createElement('li');
+      replyItem.className = 'message received';
+      const responseTime = new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      replyItem.innerHTML = `<div class="message-sender">AI Chatbot</div><div class="message-text">${data.response}</div><div class="message-time">${responseTime}</div>`;
+      messagesList.appendChild(replyItem);
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+
+      // Limpar o status após receber a resposta
+      clearInterval(typingInterval);
+      statusElement.innerHTML = 'Online';
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      clearInterval(typingInterval);
+      statusElement.innerHTML = 'Online';
+    }
+  });
+</script>
+{% endblock %}
